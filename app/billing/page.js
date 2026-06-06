@@ -6,12 +6,12 @@ import { Search, User, CreditCard, ShieldCheck, Printer, Trash, Settings, Packag
 
 export default function BillingTerminal() {
   const [activeTab, setActiveTab] = useState('billing');
-  const [shopSettings, setShopSettings] = useState({ shop_state: 'Maharashtra', shop_name: '', shop_gstin: '' });
+  const [shopSettings, setShopSettings] = useState({ shop_state: 'Kerala', shop_name: '', shop_gstin: '' });
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   
   // Selected billing targets
-  const [selectedCustomer, setSelectedCustomer] = useState({ id: '', name: 'Walk-in Customer', state: 'Maharashtra', gstin: '' });
+  const [selectedCustomer, setSelectedCustomer] = useState({ id: '', name: 'Walk-in Customer', state: 'Kerala', gstin: '' });
   const [cart, setCart] = useState([]);
   
   // Invoice Metadata
@@ -567,7 +567,7 @@ export default function BillingTerminal() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Shop State</label>
                 <select 
                   className="form-input"
-                  value={shopSettings.shop_state || 'Maharashtra'}
+                  value={shopSettings.shop_state || 'kerala'}
                   onChange={(e) => setShopSettings({ ...shopSettings, shop_state: e.target.value })}
                 >
                   <option value="Maharashtra">Maharashtra</option>

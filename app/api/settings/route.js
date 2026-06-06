@@ -13,7 +13,7 @@ export async function GET(request) {
     // Default shop settings if none exist
     if (Object.keys(settings).length === 0) {
       return NextResponse.json({
-        shop_state: 'Maharashtra',
+        shop_state: 'kerala',
         shop_name: 'Billing System',
         shop_gstin: '',
         shop_address: ''

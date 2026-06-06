@@ -122,7 +122,7 @@ export default function Home() {
           <p className="mt-1 text-xs leading-5 text-slate-400">
             GSTIN 27AAAAA1111A1Z1
           </p>
-          <p className="text-xs leading-5 text-slate-400">Maharashtra</p>
+          <p className="text-xs leading-5 text-slate-400">Kerala</p>
         </div>
       </aside>
 
