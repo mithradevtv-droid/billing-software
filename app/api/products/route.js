@@ -79,3 +79,45 @@ export async function PUT(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Product ID required" },
+        { status: 400 }
+      );
+    }
+
+    const deleteStockLedger = db.prepare(
+        "DELETE FROM stock_ledger WHERE product_id = ?"
+    );
+    deleteStockLedger.run(id);
+  
+    const deleteInvoiceItems = db.prepare(
+        "DELETE FROM invoice_items WHERE product_id = ?"
+    );
+
+    deleteInvoiceItems.run(id);
+
+    const remove = db.prepare(
+      "DELETE FROM products WHERE id = ?" 
+    );
+
+    remove.run(id);
+
+    return NextResponse.json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("Products DELETE error:", error);
+
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}

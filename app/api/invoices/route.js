@@ -2,6 +2,57 @@
 import db from '@/lib/db';
 import { NextResponse } from 'next/server';
 
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (id) {
+      const invoice = db.prepare(`
+        SELECT
+          invoices.*,
+          customers.name as customer_name,
+          customers.phone,
+          customers.gstin,
+          customers.state
+        FROM invoices
+        LEFT JOIN customers
+        ON invoices.customer_id = customers.id
+        WHERE invoices.id = ?
+      `).get(id);
+
+      const items = db.prepare(`
+       SELECT *
+         FROM invoice_items
+        WHERE invoice_id = ?
+      `).all(id);
+
+      return NextResponse.json({
+        ...invoice,
+          items,
+      });
+    }
+
+    const invoices = db.prepare(`
+      SELECT
+        invoices.*,
+        customers.name as customer_name
+      FROM invoices
+      LEFT JOIN customers
+      ON invoices.customer_id = customers.id
+      ORDER BY invoices.id DESC
+    `).all();
+
+    return NextResponse.json(invoices);
+
+  } catch (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request) {
   const data = await request.json();
   const { 

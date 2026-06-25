@@ -70,3 +70,27 @@ export async function PUT(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+
+    const id = searchParams.get("id");
+
+    db.prepare(
+      "DELETE FROM customers WHERE id=?"
+    ).run(id);
+
+    return NextResponse.json({
+      success: true,
+    });
+
+  } catch (error) {
+
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+
+  }
+}
