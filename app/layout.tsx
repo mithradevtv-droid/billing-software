@@ -1,33 +1,47 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import './globals.css'
+import { Toaster } from 'sonner'
+import { Sora, Inter, JetBrains_Mono } from 'next/font/google'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const sora = Sora({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-sora',
+  display: 'swap',
+})
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
-export const metadata: Metadata = {
-  title: "LedgerOne Billing",
-  description: "GST-ready invoicing, stock, customers, and reports.",
-};
+const jetbrains = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-mono',
+  display: 'swap',
+})
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const metadata = {
+  title: 'BillMate Pro — GST Billing Suite',
+  description: 'Professional GST billing for modern commerce',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`${sora.variable} ${inter.variable} ${jetbrains.variable}`}>
+      <body className="font-sans antialiased min-h-screen">
+        {children}
+        <Toaster richColors position="top-right" toastOptions={{
+          className: 'toast-animate',
+          style: {
+            background: '#171f33',
+            color: '#dae2fd',
+            border: '1px solid #464554',
+          }
+        }} />
+      </body>
     </html>
-  );
+  )
 }

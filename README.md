@@ -1,244 +1,299 @@
-# 🚀 LedgerOne
+# BillMate
 
-<div align="center">
+A modern GST Billing, Inventory Management, and Business Operations platform built for Indian businesses.
 
-**A Modern GST Billing & Inventory Management System**
-
-Built with **Next.js 16**, **React**, **TypeScript**, **Tailwind CSS**, and **SQLite**.
-
-Designed for small and medium-sized businesses to efficiently manage customers, products, inventory, and GST-compliant invoices.
-
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge\&logo=next.js)
-![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge\&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge\&logo=typescript)
-![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge\&logo=sqlite)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38BDF8?style=for-the-badge\&logo=tailwind-css)
-
-</div>
+BillMate helps small and medium-sized businesses manage products, inventory, customers, suppliers, invoices, taxation, and stock movement through a clean and efficient web-based system.
 
 ---
 
-# 📖 Overview
+## Overview
 
-LedgerOne is a lightweight yet powerful billing and inventory management application that helps businesses create GST invoices, manage inventory, track customers, and maintain sales records.
+BillMate is a full-stack business management application designed to streamline day-to-day operations including:
 
-The project is built using the latest **Next.js App Router** architecture with a clean, scalable codebase that can grow into a complete ERP solution.
+- GST-compliant invoicing
+- Inventory and stock management
+- Product catalog management
+- Customer and supplier management
+- Stock movement tracking
+- Business analytics and reporting
 
----
-
-# ✨ Features
-
-## 📊 Dashboard
-
-* Business overview
-* Sales summary
-* Recent invoices
-* Quick actions
+The platform is built using modern web technologies with a focus on performance, scalability, and user experience.
 
 ---
 
-## 👥 Customer Management
+## Key Features
 
-* Add customers
-* Edit customer details
-* Delete customers
-* Search customers
+### Authentication & Security
 
----
+- Secure authentication using Supabase Auth
+- Protected application routes
+- Password reset functionality
+- Row-Level Security (RLS)
 
-## 📦 Product Management
+### Dashboard
 
-* Add products
-* Edit products
-* Delete products
-* Product categories
-* GST rate selection
-* Inventory tracking
+- Sales overview
+- Revenue tracking
+- Low stock monitoring
+- Inventory insights
+- Recent invoice activity
 
----
+### Product Management
 
-## 🧾 Billing
+- Product catalog
+- SKU management
+- Barcode support
+- HSN code support
+- Product categorization
+- Product image uploads
+- Product search and filtering
 
-* GST invoice generation
-* Customer selection
-* Multiple products per invoice
-* Automatic tax calculation
-* CGST / SGST / IGST support
-* Automatic inventory deduction
+### Inventory Management
 
----
+- Real-time stock tracking
+- Stock adjustment system
+- Stock movement ledger
+- Low stock alerts
+- Inventory monitoring dashboard
 
-## 📄 Invoice Management
+### Customer Management
 
-* Invoice history
-* Invoice details
-* Printable invoices
+- Customer database
+- GSTIN support
+- State-wise GST handling
+- Contact management
 
----
+### Supplier Management
 
-## 📦 Inventory
+- Supplier database
+- GST information tracking
+- Contact and address management
 
-* Stock management
-* Stock deduction after sales
-* Stock ledger
-* Low stock tracking
+### GST Billing System
 
----
+- GST-compliant invoices
+- CGST, SGST, and IGST calculations
+- Interstate and intrastate billing
+- Invoice status management
+- Payment tracking
 
-# 🛠 Tech Stack
+### Invoice Management
 
-| Technology     | Purpose            |
-| -------------- | ------------------ |
-| Next.js 16     | Frontend Framework |
-| React 19       | UI Library         |
-| TypeScript     | Type Safety        |
-| Tailwind CSS   | Styling            |
-| SQLite         | Database           |
-| better-sqlite3 | Database Driver    |
-| shadcn/ui      | UI Components      |
-| Lucide React   | Icons              |
-
----
-
-# 🗄 Database Schema
-
-LedgerOne currently includes:
-
-* Products
-* Customers
-* Suppliers
-* Invoices
-* Invoice Items
-* Stock Ledger
-* Settings
+- Create invoices
+- View invoice details
+- Track payment status
+- Invoice history
+- Itemized billing
 
 ---
 
-# 📂 Project Structure
+## Technology Stack
+
+### Frontend
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- shadcn/ui
+- Radix UI
+- Lucide Icons
+
+### Backend
+
+- Supabase
+- PostgreSQL
+- Supabase Storage
+- Supabase Authentication
+
+### Infrastructure
+
+- Row-Level Security (RLS)
+- Cloud Storage
+- Real-Time Database
+
+---
+
+## System Architecture
 
 ```text
-app/
+BillMate
 │
-├── api/
-├── billing/
-├── customers/
-├── dashboard/
-├── invoices/
-├── products/
-│
-components/
-│
-├── billing/
-├── customers/
-├── dashboard/
-├── invoices/
-├── layout/
-├── products/
-├── ui/
-│
-lib/
-│
-public/
-│
-billing.db
+├── Authentication
+├── Dashboard
+├── Products
+├── Inventory
+├── Customers
+├── Suppliers
+├── Invoices
+├── Stock Ledger
+└── Reporting
 ```
 
 ---
 
-# 🚀 Getting Started
+## Database Schema
 
-## Clone the repository
+### Core Entities
 
-```bash
-git clone https://github.com/YOUR_USERNAME/ledgerone.git
+```text
+shops
+customers
+suppliers
+products
+invoices
+invoice_items
+stock_ledger
 ```
 
-## Navigate to the project
+### Inventory Flow
 
-```bash
-cd ledgerone
+```text
+Product Creation
+       │
+       ▼
+Stock Added
+       │
+       ▼
+Invoice Generated
+       │
+       ▼
+Stock Deducted
+       │
+       ▼
+Ledger Updated
 ```
 
-## Install dependencies
+---
+
+## Product Images
+
+BillMate supports product image management using Supabase Storage.
+
+Features include:
+
+- Product thumbnails
+- Cloud image storage
+- Public image delivery
+- Inventory visualization
+
+---
+
+## Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/mithradevtv-droid/billing-software.git
+cd billing-software
+```
+
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-## Start the development server
+### Configure Environment Variables
+
+Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Run Development Server
 
 ```bash
 npm run dev
 ```
 
-Visit:
+Application will be available at:
 
-```
+```text
 http://localhost:3000
 ```
 
 ---
 
+## Project Structure
+
+```text
+app/
+components/
+lib/
+public/
+
+├── Authentication
+├── Dashboard
+├── Products
+├── Customers
+├── Suppliers
+├── Billing
+├── Inventory
+└── Reports
+```
 
 ---
 
-# 🧪 Current Status
-
-### Version 1.0.0 (MVP)
+## Current Development Status
 
 ### Completed
 
-* Dashboard
-* Customer Management
-* Product Management
-* GST Billing
-* Invoice Management
-* Inventory Tracking
+- Authentication System
+- Dashboard
+- GST Billing Engine
+- Product Management
+- Inventory Tracking
+- Stock Adjustment Module
+- Product Image Uploads
+- Customer Management
+- Invoice Management
+- Stock Ledger
+
+### In Progress
+
+- Supplier Management Module
+- Purchase Entry System
+- Purchase History Tracking
+
+### Planned
+
+- Customer Ledger
+- Supplier Ledger
+- Expense Management
+- Profit & Loss Reports
+- Barcode Scanner Integration
+- WhatsApp Invoice Sharing
+- Advanced Business Analytics
+- Multi-Shop Support
 
 ---
 
-# 🔮 Roadmap (v2)
+## Version
 
-Planned improvements include:
-
-* User Authentication
-* Role-based Access Control
-* Supplier Management
-* Purchase Orders
-* Barcode Scanner
-* PDF Invoice Export
-* Reports & Analytics
-* Charts & Insights
-* Cloud Database Support
-* Multi-user System
-* Mobile Responsive Dashboard
-* AI-powered Business Assistant
+```text
+Current Version: v0.4.0
+Development Stage: Active
+```
 
 ---
 
-# 🤝 Contributing
-
-Contributions, suggestions, and feedback are welcome.
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Open a Pull Request
-
----
-
-# 📜 License
-
-This project is licensed under the **MIT License**.
-
----
-
-# 👨‍💻 Author
+## Author
 
 **Mithradev**
 
-B.Tech Computer Science & Engineering (Artificial Intelligence)
-
+B.Tech CSE (Artificial Intelligence)  
 College of Engineering Trikaripur
 
-If you found this project helpful, consider giving it a ⭐ on GitHub.
+GitHub:
+https://github.com/mithradevtv-droid
+
+---
+
+## License
+
+This project is developed for educational, learning, and business management purposes.
+
+All rights reserved.
