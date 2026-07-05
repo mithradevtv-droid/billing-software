@@ -1,22 +1,25 @@
-import { getCurrentShop, getDashboardStats, getInvoices, getProducts } from '@/lib/db'
+import { getCurrentShop, getDashboardStats, getInvoices, getProducts,getRecentPurchases } from '@/lib/db'
 import { StatsCards } from '@/components/dashboard/stats-cards'
 import { SalesChart } from '@/components/dashboard/sales-chart'
 import { RecentInvoices } from '@/components/dashboard/recent-invoices'
 import { GSTSummary } from '@/components/dashboard/gst-summary'
 import { InventoryWatch } from '@/components/dashboard/inventory-watch'
+import { RecentPurchases } from '@/components/purchases/recent-purchases'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, FileText } from 'lucide-react'
 import Link from 'next/link'
 
+
 export default async function DashboardPage() {
   const shop = await getCurrentShop()
   if (!shop) return null
   
-  const [stats, invoices, products] = await Promise.all([
+  const [stats, invoices, products, recentPurchases] = await Promise.all([
     getDashboardStats(shop.id),
     getInvoices(shop.id, { limit: 5 }),
     getProducts(shop.id),
+    getRecentPurchases(shop.id, 5),
   ])
 
   const lowStock = products
@@ -41,7 +44,7 @@ export default async function DashboardPage() {
         <div className="flex gap-2 slide-in-right">
           <Button asChild variant="outline" className="border-[#464554] text-[#dae2fd] hover:bg-[#171f33] hover:border-[#4cd7f6] hover:text-[#4cd7f6] uppercase text-xs font-bold tracking-wider">
             <Link href="/reports">
-              <FileText className="mr-2 h-4 w-4" /> GSTR1
+              <FileText className="mr-2 h-4 w-4" /> REPORTS
             </Link>
           </Button>
           <Button asChild className="primary-gradient text-white uppercase text-xs font-bold tracking-wider">
@@ -68,6 +71,9 @@ export default async function DashboardPage() {
         <div className="xl:col-span-2">
           <RecentInvoices invoices={invoices} />
         </div>
+          <div className="xl:col-span-1">
+          <RecentPurchases purchases={recentPurchases} />
+         </div>
         <InventoryWatch products={lowStock} />
       </div>
     </div>

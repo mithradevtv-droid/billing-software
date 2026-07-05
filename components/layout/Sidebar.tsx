@@ -3,18 +3,24 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
   LayoutDashboard, Receipt, Users, Package, BarChart3, 
-  Settings, LogOut, ReceiptText 
+  Settings, LogOut, ReceiptText, 
+  Truck, ShoppingBag, Home,FileText, ShoppingCart,
+  CreditCard, 
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
+
 
 const nav = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/billing', label: 'New Bill', icon: Receipt },
   { href: '/invoices', label: 'Invoices', icon: ReceiptText },
+   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/customers', label: 'Customers', icon: Users },
   { href: '/products', label: 'Inventory', icon: Package },
-  { href: '/reports', label: 'GST Reports', icon: BarChart3 },
+  { href: '/suppliers', label: 'Suppliers', icon: Truck },
+  { href: '/purchases', label: 'Purchases', icon: ShoppingBag },
+  { href: '/reports', label: 'Reports', icon: BarChart3 },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 

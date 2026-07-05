@@ -52,6 +52,11 @@ export function BillingTerminal({
   const [showCheckoutDialog, setShowCheckoutDialog] = useState(false)
   const [loading, setLoading] = useState(false)
   const [notes, setNotes] = useState('')
+  
+  // Payment state
+  const [paymentStatus, setPaymentStatus] = useState<'Paid' | 'Partial' | 'Unpaid'>('Unpaid')
+  const [initialPaymentAmount, setInitialPaymentAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('cash')
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -109,6 +114,25 @@ export function BillingTerminal({
 
   const totals = useMemo(() => calculateInvoice(calculatedItems), [calculatedItems])
 
+  // Calculate paid amount based on payment status
+  const paidAmount = useMemo(() => {
+    if (paymentStatus === 'Paid') return totals.total
+    if (paymentStatus === 'Partial') return Math.min(Number(initialPaymentAmount) || 0, totals.total)
+    return 0
+  }, [paymentStatus, initialPaymentAmount, totals.total])
+
+  const outstandingAmount = totals.total - paidAmount
+
+  // Auto-fill amount when switching to Paid
+  function handlePaymentStatusChange(value: 'Paid' | 'Partial' | 'Unpaid') {
+    setPaymentStatus(value)
+    if (value === 'Paid') {
+      setInitialPaymentAmount(totals.total.toString())
+    } else if (value === 'Unpaid') {
+      setInitialPaymentAmount('')
+    }
+  }
+
   // Add customer
   async function handleAddCustomer(formData: any) {
     setLoading(true)
@@ -124,12 +148,38 @@ export function BillingTerminal({
     }
   }
 
-  // Checkout
-  async function handleCheckout(status: 'Paid' | 'Unpaid') {
+  // Checkout - handles all 3 payment statuses
+  async function handleCheckout() {
     if (cart.length === 0) {
       toast.error('Cart is empty')
       return
     }
+
+    // Validation
+    if (paymentStatus === 'Partial') {
+      const amt = Number(initialPaymentAmount)
+      if (isNaN(amt) || amt <= 0) {
+        toast.error('Please enter a valid partial payment amount')
+        return
+      }
+      if (amt > totals.total) {
+        toast.error(`Payment cannot exceed total: ₹${totals.total}`)
+        return
+      }
+      if (amt === totals.total) {
+        toast.error('Use "Paid" status for full payment')
+        return
+      }
+    }
+
+    if (paymentStatus === 'Paid') {
+      const amt = Number(initialPaymentAmount)
+      if (amt !== totals.total) {
+        toast.error('Paid amount must equal total')
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const invoice = {
@@ -142,23 +192,58 @@ export function BillingTerminal({
         sgst: totals.sgstTotal,
         igst: totals.igstTotal,
         total: totals.total,
-        status,
-        paid_amount: status === 'Paid' ? totals.total : 0,
+        status: paymentStatus,
+        paid_amount: paidAmount,
         notes,
       }
-      console.log('CHECKOUT ITEMS:', calculatedItems)
+      
+      console.log('CHECKOUT:', { invoice, paidAmount, outstandingAmount })
+      
       const items = calculatedItems.map(({ id, ...item }) => item)
       const newInvoice = await createInvoice(shop.id, invoice, items)
       
-      toast.success(`Invoice ${invoice.invoice_number} created!`)
+      // Record payment for Paid and Partial
+      if ((paymentStatus === 'Paid' || paymentStatus === 'Partial') && paidAmount > 0) {
+        try {
+          const { recordPaymentAction } = await import('@/app/(dashboard)/payments/actions')
+          const formData = new FormData()
+          formData.append('shop_id', shop.id)
+          formData.append('invoice_id', newInvoice.id)
+          formData.append('amount', paidAmount.toString())
+          formData.append('payment_method', paymentMethod)
+          formData.append('payment_date', new Date().toISOString().split('T')[0])
+          formData.append('reference_number', '')
+          formData.append('notes', paymentStatus === 'Paid' 
+            ? 'Full payment at invoice creation' 
+            : 'Initial partial payment at invoice creation')
+          
+          await recordPaymentAction(formData)
+          
+          if (paymentStatus === 'Paid') {
+            toast.success(`Invoice ${invoice.invoice_number} created & fully paid! 🎉`)
+          } else {
+            toast.success(`Invoice created! ₹${paidAmount} received, ₹${outstandingAmount} pending.`)
+          }
+        } catch (payError) {
+          console.error('Payment recording error:', payError)
+          toast.success('Invoice created! (Payment recording failed - record manually)')
+        }
+      } else {
+        toast.success(`Invoice ${invoice.invoice_number} created!`)
+      }
+      
       setCart([])
       setSelectedCustomer(null)
       setNotes('')
+      setPaymentStatus('Unpaid')
+      setInitialPaymentAmount('')
+      setPaymentMethod('cash')
       setShowCheckoutDialog(false)
       router.push(`/invoices/${newInvoice.id}`)
       router.refresh()
     } catch (e: any) {
       toast.error(e.message || 'Failed to create invoice')
+      console.error('Checkout error:', e)
     } finally {
       setLoading(false)
     }
@@ -512,7 +597,7 @@ export function BillingTerminal({
         </DialogContent>
       </Dialog>
 
-      {/* Checkout Dialog */}
+      {/* Checkout Dialog with Payment Method for ALL paid options */}
       <Dialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
         <DialogContent className="bg-[#171f33] border-[#464554] text-[#dae2fd]">
           <DialogHeader>
@@ -524,6 +609,101 @@ export function BillingTerminal({
                 ₹{totals.total.toLocaleString('en-IN')}
               </span>
             </p>
+
+            {/* Payment Status Selector */}
+            <div className="space-y-2">
+              <Label htmlFor="payment-status">Payment Status *</Label>
+              <Select value={paymentStatus} onValueChange={handlePaymentStatusChange}>
+                <SelectTrigger className="bg-[#0b1326] border-[#464554]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#171f33] border-[#464554]">
+                  <SelectItem value="Paid">💚 Paid (Full)</SelectItem>
+                  <SelectItem value="Partial">💛 Partial Payment</SelectItem>
+                  <SelectItem value="Unpaid">🔴 Unpaid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Payment Amount - shown for Paid and Partial */}
+            {paymentStatus === 'Partial' && (
+              <div className="space-y-2">
+                <Label htmlFor="payment-amount">Payment Amount (₹) *</Label>
+                <Input
+                  id="payment-amount"
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  max={totals.total - 1}
+                  value={initialPaymentAmount}
+                  onChange={(e) => setInitialPaymentAmount(e.target.value)}
+                  placeholder={`Max: ${totals.total - 1}`}
+                  className="bg-[#0b1326] border-[#464554]"
+                  required
+                />
+                <p className="text-xs text-[#908fa0]">
+                  Customer pays now, balance ₹{(totals.total - Number(initialPaymentAmount || 0)).toLocaleString('en-IN')} later
+                </p>
+              </div>
+            )}
+
+            {paymentStatus === 'Paid' && (
+              <div className="space-y-2">
+                <Label htmlFor="payment-amount-paid">Amount Received (₹) *</Label>
+                <Input
+                  id="payment-amount-paid"
+                  type="number"
+                  step="0.01"
+                  value={initialPaymentAmount}
+                  onChange={(e) => setInitialPaymentAmount(e.target.value)}
+                  placeholder={totals.total.toString()}
+                  className="bg-[#0b1326] border-[#464554]"
+                  required
+                />
+                <p className="text-xs text-[#908fa0]">
+                  Full payment: ₹{totals.total.toLocaleString('en-IN')}
+                </p>
+              </div>
+            )}
+
+            {/* Payment Method - shown for BOTH Paid and Partial */}
+            {(paymentStatus === 'Paid' || paymentStatus === 'Partial') && (
+              <div className="space-y-2">
+                <Label htmlFor="payment-method">Payment Method *</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger className="bg-[#0b1326] border-[#464554]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#171f33] border-[#464554]">
+                    <SelectItem value="cash">💵 Cash</SelectItem>
+                    <SelectItem value="upi">📱 UPI</SelectItem>
+                    <SelectItem value="card">💳 Card</SelectItem>
+                    <SelectItem value="bank_transfer">🏦 Bank Transfer</SelectItem>
+                    <SelectItem value="cheque">📝 Cheque</SelectItem>
+                    <SelectItem value="other">🔖 Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Show calculation preview for partial */}
+            {paymentStatus === 'Partial' && Number(initialPaymentAmount) > 0 && (
+              <div className="bg-[#0b1326] border border-[#464554] rounded-lg p-3 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#c7c4d7]">Paid now ({paymentMethod}):</span>
+                  <span className="text-[#3ddc97] font-bold">
+                    ₹{Math.min(Number(initialPaymentAmount), totals.total).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#c7c4d7]">Outstanding:</span>
+                  <span className="text-[#ffce50] font-bold">
+                    ₹{Math.max(0, totals.total - Number(initialPaymentAmount)).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optional)</Label>
               <Input
@@ -538,18 +718,25 @@ export function BillingTerminal({
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
-              onClick={() => handleCheckout('Unpaid')}
+              onClick={() => setShowCheckoutDialog(false)}
               disabled={loading}
               className="border-[#464554]"
             >
-              Save as Unpaid
+              Cancel
             </Button>
             <Button
-              onClick={() => handleCheckout('Paid')}
+              onClick={handleCheckout}
               disabled={loading}
               className="primary-gradient"
             >
-              {loading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Mark as Paid'}
+              {loading ? (
+                <Loader2 className="animate-spin h-4 w-4 mr-2" />
+              ) : (
+                <Receipt className="h-4 w-4 mr-2" />
+              )}
+              {paymentStatus === 'Paid' && 'Create & Mark Paid'}
+              {paymentStatus === 'Unpaid' && 'Create Unpaid Invoice'}
+              {paymentStatus === 'Partial' && 'Create with Partial Payment'}
             </Button>
           </DialogFooter>
         </DialogContent>
