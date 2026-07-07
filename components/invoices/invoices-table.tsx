@@ -21,6 +21,7 @@ import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/gst-calculator'
 import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
+import jsPDF from 'jspdf'
 
 export function InvoicesTable({ initialInvoices }: { initialInvoices: any[] }) {
   const router = useRouter()
@@ -55,12 +56,78 @@ export function InvoicesTable({ initialInvoices }: { initialInvoices: any[] }) {
     }
   }
 
+
+  async function editInvoiceStatus(inv: any) {
+    const nextStatus = window.prompt('Enter status: Paid, Partial, or Unpaid', inv.status || 'Unpaid')
+    if (!nextStatus) return
+
+    const normalized = nextStatus.trim()
+    if (!['Paid', 'Partial', 'Unpaid'].includes(normalized)) {
+      toast.error('Status must be Paid, Partial, or Unpaid')
+      return
+    }
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('invoices')
+        .update({
+          status: normalized,
+          paid_amount: normalized === 'Paid' ? Number(inv.total || 0) : normalized === 'Unpaid' ? 0 : Number(inv.paid_amount || 0),
+        })
+        .eq('id', inv.id)
+
+      if (error) throw error
+
+      setInvoices(prev => prev.map(item => item.id === inv.id ? { ...item, status: normalized } : item))
+      toast.success('Invoice updated')
+      router.refresh()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update invoice')
+    }
+  }
+
+  function downloadInvoicePDF(inv: any) {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const date = format(new Date(inv.date || inv.created_at), 'dd MMM yyyy')
+    const amount = formatCurrency(Number(inv.total || 0))
+
+    doc.setFontSize(18)
+    doc.text(`Invoice ${inv.invoice_number}`, 14, 18)
+    doc.setFontSize(11)
+    doc.text(`Customer: ${inv.customer?.name || 'Walk-in'}`, 14, 32)
+    doc.text(`Phone: ${inv.customer?.phone || '-'}`, 14, 40)
+    doc.text(`Date: ${date}`, 14, 48)
+    doc.text(`Status: ${inv.status || '-'}`, 14, 56)
+    doc.text(`Amount: ${amount}`, 14, 68)
+    doc.text('Open the invoice detail page for the full tax invoice PDF.', 14, 84)
+
+    doc.save(`${inv.invoice_number || 'invoice'}.pdf`)
+    toast.success('PDF downloaded')
+  }
+
+  async function shareInvoice(inv: any) {
+    const text = `Invoice ${inv.invoice_number}\nCustomer: ${inv.customer?.name || 'Walk-in'}\nAmount: ${formatCurrency(Number(inv.total || 0))}\nStatus: ${inv.status || '-'}\nDate: ${format(new Date(inv.date || inv.created_at), 'dd MMM yyyy')}`
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Invoice ${inv.invoice_number}`, text })
+      } else {
+        await navigator.clipboard.writeText(text)
+        toast.success('Invoice details copied')
+      }
+    } catch {
+      await navigator.clipboard.writeText(text)
+      toast.success('Invoice details copied')
+    }
+  }
   function getStatusBadge(status: string) {
     switch (status) {
       case 'Paid':
         return <Badge className="status-paid text-[10px] font-bold">✓ Paid</Badge>
       case 'Unpaid':
         return <Badge className="status-unpaid text-[10px] font-bold">! Unpaid</Badge>
+      case 'Partial':
       case 'Partially Paid':
         return <Badge className="status-partial text-[10px] font-bold">~ Partial</Badge>
       default:
@@ -71,7 +138,7 @@ export function InvoicesTable({ initialInvoices }: { initialInvoices: any[] }) {
   // Stats
   const totalAmount = filtered.reduce((sum, inv) => sum + Number(inv.total || 0), 0)
   const paidAmount = filtered.filter(i => i.status === 'Paid').reduce((s, i) => s + Number(i.total || 0), 0)
-  const unpaidAmount = filtered.filter(i => i.status === 'Unpaid').reduce((s, i) => s + Number(i.total || 0), 0)
+  const unpaidAmount = filtered.filter(i => i.status === 'Unpaid' || i.status === 'Partial' || i.status === 'Partially Paid').reduce((s, i) => s + Number(i.total || 0), 0)
 
   return (
     <div className="space-y-6 animate-in">
@@ -131,7 +198,7 @@ export function InvoicesTable({ initialInvoices }: { initialInvoices: any[] }) {
 
             {/* Status Filter */}
             <div className="flex gap-1 flex-wrap">
-              {['all', 'Paid', 'Unpaid', 'Partially Paid'].map(status => (
+              {['all', 'Paid', 'Unpaid', 'Partial'].map(status => (
                 <Button
                   key={status}
                   variant={statusFilter === status ? 'default' : 'outline'}
@@ -273,7 +340,7 @@ export function InvoicesTable({ initialInvoices }: { initialInvoices: any[] }) {
                             variant="ghost"
                             className="h-8 px-2 text-[#c7c4d7] hover:bg-[#171f33] hover:text-[#dae2fd]"
                             title="Edit"
-                            onClick={() => toast.info('Edit feature coming soon')}
+                            onClick={() => editInvoiceStatus(inv)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -295,27 +362,27 @@ export function InvoicesTable({ initialInvoices }: { initialInvoices: any[] }) {
                             >
                               <DropdownMenuItem 
                                 asChild
-                                className="hover:bg-[#0b1326] focus:bg-[#0b1326] cursor-pointer"
+                                className="text-[#dae2fd]"
                               >
-                                <Link href={`/invoices/${inv.id}`} className="flex items-center w-full">
+                                <Link href={`/invoices/${inv.id}`} className="border-[#464554] text-[#dae2fd]">
                                   <Eye className="mr-2 h-4 w-4" /> View Invoice
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => window.print()}
-                                className="hover:bg-[#0b1326] focus:bg-[#0b1326] cursor-pointer"
+                                className="bg-[#171f33] border-[#464554] text-[#dae2fd]"
                               >
                                 <Printer className="mr-2 h-4 w-4" /> Print
                               </DropdownMenuItem>
                               <DropdownMenuItem 
-                                onClick={() => toast.info('Download coming soon')}
-                                className="hover:bg-[#0b1326] focus:bg-[#0b1326] cursor-pointer"
+                                onClick={() => downloadInvoicePDF(inv)}
+                                className="bg-[#171f33] border-[#464554] text-[#dae2fd"
                               >
                                 <Download className="mr-2 h-4 w-4" /> Download PDF
                               </DropdownMenuItem>
                               <DropdownMenuItem 
-                                onClick={() => toast.info('Share feature coming soon')}
-                                className="hover:bg-[#0b1326] focus:bg-[#0b1326] cursor-pointer"
+                                onClick={() => shareInvoice(inv)}
+                                className="bg-[#171f33] border-[#464554] text-[#dae2fd"
                               >
                                 <Send className="mr-2 h-4 w-4" /> Share / Email
                               </DropdownMenuItem>

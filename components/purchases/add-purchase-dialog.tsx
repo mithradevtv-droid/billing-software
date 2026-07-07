@@ -165,6 +165,8 @@ export function AddPurchaseDialog({
       setQuantity('')
       setUnitPrice('')
       setNotes('')
+
+      window.location.reload()
     } catch (err: any) {
       toast.error(
         err.message ||

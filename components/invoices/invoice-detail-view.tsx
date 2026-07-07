@@ -41,7 +41,7 @@ export function InvoiceDetailView({
   const discount = Number(invoice.discount) || 0
   const isInterState = igst > 0
   const items = invoice.items || []
-  console.log("INVOICE ITEMS", invoice.items)
+ 
 
   async function updateStatus(newStatus: string) {
     setUpdating(true)
@@ -83,43 +83,67 @@ export function InvoiceDetailView({
   }
 
   async function downloadPDF() {
-    if (!invoiceRef.current) return
-    setDownloading(true)
-    try {
-      const canvas = await html2canvas(invoiceRef.current, {
+  if (!invoiceRef.current) {
+    toast.error('Invoice element not found')
+    return
+  }
+
+  setDownloading(true)
+
+  try {
+    const canvas = await html2canvas(
+      invoiceRef.current,
+      {
         scale: 2,
+        useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-      })
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = pdfWidth - 20
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      
-      let heightLeft = imgHeight
-      let position = 10
-      
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-      heightLeft -= (pdfHeight - 20)
-      
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 10
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-        heightLeft -= (pdfHeight - 20)
       }
-      
-      pdf.save(`${invoice.invoice_number}.pdf`)
-      toast.success('PDF downloaded!')
-    } catch (err: any) {
-      toast.error('Failed to generate PDF')
-      console.error(err)
-    } finally {
-      setDownloading(false)
-    }
+    )
+
+    const imgData = canvas.toDataURL('image/png')
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    })
+
+    const pdfWidth =
+      pdf.internal.pageSize.getWidth()
+
+    const imgWidth = pdfWidth - 20
+
+    const imgHeight =
+      (canvas.height * imgWidth) /
+      canvas.width
+
+    pdf.addImage(
+      imgData,
+      'PNG',
+      10,
+      10,
+      imgWidth,
+      imgHeight
+    )
+
+    pdf.save(
+      `${invoice.invoice_number}.pdf`
+    )
+
+    toast.success('PDF downloaded!')
+  } catch (err: any) {
+    console.error('PDF ERROR:', err)
+
+    toast.error(
+      err?.message ||
+      'Failed to generate PDF'
+    )
+  } finally {
+    setDownloading(false)
   }
+}
 
   function shareInvoice() {
     const text = `📄 Tax Invoice ${invoice.invoice_number}\n\nFrom: ${shop.name}\nTo: ${invoice.customer?.name || 'Walk-in Customer'}\nAmount: ₹${total.toLocaleString('en-IN')}\nDate: ${format(new Date(invoice.date || invoice.created_at), 'dd MMM yyyy')}\nStatus: ${currentStatus}\n\n${shop.phone ? 'Contact: ' + shop.phone : ''}`
@@ -220,10 +244,10 @@ export function InvoiceDetailView({
       <div ref={invoiceRef}>
         <Card className="midnight-card border-[#464554] overflow-hidden print:bg-white">
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-[#0b1326] to-[#171f33] border-b border-[#464554] p-6 print:bg-white print:border-gray-300">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="bg-[#0b1326] border-b border-[#464554] p-6 print:bg-white print:border-gray-300">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl primary-gradient flex items-center justify-center shadow-lg shadow-[#4cd7f6]/30">
+                <div className="h-14 w-14 rounded-xl bg-[#4cd7f6] flex items-center justify-center">
                   <Receipt className="h-7 w-7 text-white" />
                 </div>
                 <div>
@@ -342,7 +366,7 @@ export function InvoiceDetailView({
             <div className="mb-6 overflow-hidden rounded-lg border border-[#464554]">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gradient-to-r from-[#4cd7f6]/10 to-[#8083ff]/10 border-b border-[#4cd7f6]">
+                  <tr className="bg-[#0b1326] border-b border-[#4cd7f6]">
                     <th className="text-left text-[10px] font-black uppercase tracking-widest text-[#4cd7f6] p-3 w-12">#</th>
                     <th className="text-left text-[10px] font-black uppercase tracking-widest text-[#4cd7f6] p-3">Item Description</th>
                     <th className="text-center text-[10px] font-black uppercase tracking-widest text-[#4cd7f6] p-3 w-16">Qty</th>

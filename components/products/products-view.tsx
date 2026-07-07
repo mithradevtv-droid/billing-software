@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { 
   Plus, Search, Package, AlertTriangle, 
-  Edit, MoreVertical, Boxes, Tag
+  Edit, Boxes, Tag
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AddProductDialog } from './add-product-dialog'
@@ -193,13 +193,13 @@ export function ProductsView({
 
                 <Badge
                   variant={status.variant}
-                 className="absolute top-2 right-2 text-[10px] font-bold"
+                  className="absolute top-2 right-2 text-[10px] font-bold"
                 >
                   {status.label === 'In Stock'
-                    ? '✓'
-                   : status.label === 'Low Stock'
-                   ? '!'
-                   : '×'}{' '}
+                    ? 'OK'
+                    : status.label === 'Low Stock'
+                    ? '!'
+                    : 'X'}{' '}
                   {status.label}
                 </Badge>
 

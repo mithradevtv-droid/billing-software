@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Search, User, Phone, Mail, MapPin, MoreVertical } from 'lucide-react'
+import { Plus, Search, User, Phone, Mail, MapPin, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import { AddCustomerDialog } from './add-customer-dialog'
+import CustomerEditDialog from './CustomerEditDialog'
 
 export function CustomersView({ 
   initialCustomers, 
@@ -21,6 +23,7 @@ export function CustomersView({
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [customers, setCustomers] = useState(initialCustomers)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const filtered = customers.filter(c =>
     c.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -32,9 +35,39 @@ export function CustomersView({
     setCustomers([newCustomer, ...customers])
   }
 
+  function handleUpdated(updatedCustomer?: any) {
+    if (updatedCustomer) {
+      setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c))
+    }
+    router.refresh()
+  }
+
+  async function deleteCustomer(customer: any) {
+    if (!confirm(`Delete customer ${customer.name}?`)) return
+
+    setDeletingId(customer.id)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customer.id)
+        .eq('shop_id', shopId)
+
+      if (error) throw error
+
+      setCustomers(prev => prev.filter(c => c.id !== customer.id))
+      toast.success('Customer deleted')
+      router.refresh()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete customer')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="space-y-6 animate-in">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#dae2fd]">
@@ -53,7 +86,6 @@ export function CustomersView({
         </Button>
       </div>
 
-      {/* Search */}
       <Card className="midnight-card border-[#464554]">
         <CardContent className="p-4">
           <div className="relative">
@@ -68,7 +100,6 @@ export function CustomersView({
         </CardContent>
       </Card>
 
-      {/* Customer List */}
       <Card className="midnight-card border-[#464554]">
         <CardHeader className="border-b border-[#464554]">
           <CardTitle className="text-base font-bold text-[#dae2fd]">
@@ -85,7 +116,7 @@ export function CustomersView({
                 variant="link" 
                 className="text-[#4cd7f6] mt-2"
               >
-                Add your first customer →
+                Add your first customer
               </Button>
             </div>
           ) : (
@@ -93,20 +124,17 @@ export function CustomersView({
               {filtered.map((customer) => (
                 <div 
                   key={customer.id}
-                  className="flex items-center justify-between p-4 hover:bg-[#222a3d] transition-colors group"
+                  className="flex items-center justify-between p-4 hover:bg-[#222a3d] transition-colors group gap-4"
                 >
                   <div className="flex items-center gap-4 min-w-0 flex-1">
-                    {/* Avatar */}
                     <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#8083ff] to-[#4cd7f6] flex items-center justify-center text-white font-bold shrink-0">
                       {customer.name?.[0]?.toUpperCase() || '?'}
                     </div>
-                    
-                    {/* Info */}
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-[#dae2fd] truncate">
                         {customer.name}
                       </p>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-[#908fa0]">
+                      <div className="flex items-center gap-4 mt-1 text-xs text-[#908fa0] flex-wrap">
                         <span className="flex items-center gap-1">
                           <Phone className="h-3 w-3" />
                           {customer.phone}
@@ -132,19 +160,22 @@ export function CustomersView({
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0">
                     {customer.gstin && (
                       <Badge variant="outline" className="border-[#4cd7f6] text-[#4cd7f6] text-[10px]">
                         B2B
                       </Badge>
                     )}
+                    <CustomerEditDialog customer={customer} onUpdated={handleUpdated} />
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-[#908fa0] hover:text-[#dae2fd] opacity-0 group-hover:opacity-100 transition-opacity"
+                      size="sm"
+                      variant="outline"
+                      className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                      onClick={() => deleteCustomer(customer)}
+                      disabled={deletingId === customer.id}
                     >
-                      <MoreVertical className="h-4 w-4" />
+                      <Trash2 className="mr-1 h-3 w-3" />
+                      {deletingId === customer.id ? 'Deleting...' : 'Delete'}
                     </Button>
                   </div>
                 </div>

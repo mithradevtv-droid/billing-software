@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 import {
   Dialog,
@@ -23,48 +25,63 @@ import {
 } from "@/components/ui/select";
 
 interface Customer {
-  id: number;
+  id: string | number;
   name: string;
   phone: string;
-  email: string;
-  gstin: string;
-  address: string;
-  state: string;
+  email: string | null;
+  gstin: string | null;
+  address: string | null;
+  state: string | null;
 }
 
 interface Props {
   customer: Customer;
-  onUpdated: () => void;
+  onUpdated: (customer?: Customer) => void;
 }
 
-export default function CustomerEditDialog({
-  customer,
-  onUpdated,
-}: Props) {
+export default function CustomerEditDialog({ customer, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
-
-  const [form, setForm] = useState(customer);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<Customer>(customer);
 
   useEffect(() => {
     setForm(customer);
   }, [customer]);
 
   async function updateCustomer() {
-    const res = await fetch("/api/customers", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
-
-    if (!res.ok) {
-      alert("Failed to update customer");
+    if (!form.name?.trim() || !form.phone?.trim()) {
+      toast.error("Customer name and phone are required");
       return;
     }
 
-    setOpen(false);
-    onUpdated();
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("customers")
+        .update({
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+          email: form.email || null,
+          gstin: form.gstin || null,
+          address: form.address || null,
+          state: form.state || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", customer.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Customer updated");
+      setOpen(false);
+      onUpdated(data as Customer);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update customer");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -75,77 +92,56 @@ export default function CustomerEditDialog({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg bg-[#171f33] border-[#464554] text-[#dae2fd]">
         <DialogHeader>
           <DialogTitle>Edit Customer</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-
           <Input
-            value={form.name}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                name: e.target.value,
-              })
-            }
+            placeholder="Customer name"
+            value={form.name || ""}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="bg-[#0b1326] border-[#464554]"
           />
 
           <Input
-            value={form.phone}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                phone: e.target.value,
-              })
-            }
+            placeholder="Phone"
+            value={form.phone || ""}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="bg-[#0b1326] border-[#464554]"
           />
 
           <Input
-            value={form.email}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                email: e.target.value,
-              })
-            }
+            placeholder="Email"
+            value={form.email || ""}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="bg-[#0b1326] border-[#464554]"
           />
 
           <Input
-            value={form.gstin}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                gstin: e.target.value,
-              })
-            }
+            placeholder="GSTIN"
+            value={form.gstin || ""}
+            onChange={(e) => setForm({ ...form, gstin: e.target.value })}
+            className="bg-[#0b1326] border-[#464554]"
           />
 
           <Input
-            value={form.address}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                address: e.target.value,
-              })
-            }
+            placeholder="Address"
+            value={form.address || ""}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            className="bg-[#0b1326] border-[#464554]"
           />
 
           <Select
-            value={form.state}
-            onValueChange={(value) =>
-              setForm({
-                ...form,
-                state: value,
-              })
-            }
+            value={form.state || undefined}
+            onValueChange={(value) => setForm({ ...form, state: value })}
           >
-            <SelectTrigger className="w-full">
-              <SelectValue />
+            <SelectTrigger className="w-full bg-[#0b1326] border-[#464554]">
+              <SelectValue placeholder="Select state" />
             </SelectTrigger>
 
-            <SelectContent>
+            <SelectContent className="bg-[#171f33] border-[#464554]">
               <SelectItem value="Kerala">Kerala</SelectItem>
               <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
               <SelectItem value="Karnataka">Karnataka</SelectItem>
@@ -153,15 +149,11 @@ export default function CustomerEditDialog({
               <SelectItem value="Goa">Goa</SelectItem>
             </SelectContent>
           </Select>
-
         </div>
 
         <DialogFooter>
-          <Button
-            className="w-full"
-            onClick={updateCustomer}
-          >
-            Update Customer
+          <Button className="w-full primary-gradient" onClick={updateCustomer} disabled={saving}>
+            {saving ? "Updating..." : "Update Customer"}
           </Button>
         </DialogFooter>
       </DialogContent>

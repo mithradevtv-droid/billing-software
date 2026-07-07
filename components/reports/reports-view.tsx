@@ -275,6 +275,7 @@ export function ReportsView({ shopId, shop, initialType, initialStartDate, initi
                           <th className="text-left p-3 text-[10px] font-bold text-[#908fa0] uppercase">Date</th>
                           <th className="text-left p-3 text-[10px] font-bold text-[#908fa0] uppercase">PO #</th>
                           <th className="text-left p-3 text-[10px] font-bold text-[#908fa0] uppercase">Supplier</th>
+                          <th className="text-left p-3 text-[10px] font-bold text-[#908fa0] uppercase">Product</th>
                           <th className="text-right p-3 text-[10px] font-bold text-[#908fa0] uppercase">Subtotal</th>
                           <th className="text-right p-3 text-[10px] font-bold text-[#908fa0] uppercase">GST</th>
                           <th className="text-right p-3 text-[10px] font-bold text-[#908fa0] uppercase">Total</th>
@@ -286,6 +287,7 @@ export function ReportsView({ shopId, shop, initialType, initialStartDate, initi
                             <td className="p-3 text-xs text-[#c7c4d7]">{formatDate(p.purchase_date)}</td>
                             <td className="p-3 font-mono text-xs font-bold text-[#dae2fd]">{p.purchase_number}</td>
                             <td className="p-3 text-xs text-[#c7c4d7]">{p.supplier?.name || 'N/A'}</td>
+                            <td className="p-3 text-xs text-[#c7c4d7]">{p.items?.map( (item: any) => item.product?.name ).join(', ') || 'N/A'} </td>
                             <td className="p-3 text-right font-mono text-xs text-[#dae2fd]">{formatCurrency(p.subtotal)}</td>
                             <td className="p-3 text-right font-mono text-xs text-[#c7c4d7]">{formatCurrency(p.gst)}</td>
                             <td className="p-3 text-right font-mono text-xs font-bold text-[#dae2fd]">{formatCurrency(p.total)}</td>

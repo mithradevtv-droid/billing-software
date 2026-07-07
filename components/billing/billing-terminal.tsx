@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
@@ -20,7 +19,8 @@ import {
   SelectTrigger, SelectValue 
 } from '@/components/ui/select'
 import { calculateItemTax, calculateInvoice, INDIAN_STATES } from '@/lib/gst-calculator'
-import { createCustomer, createInvoice } from '@/lib/db-client'
+import { createCustomer, createInvoice, createPayment } from '@/lib/db-client'
+import { createClient } from '@/lib/supabase/client'
 
 interface CartItem {
   id: string
@@ -153,7 +153,8 @@ export function BillingTerminal({
     if (cart.length === 0) {
       toast.error('Cart is empty')
       return
-    }
+    } 
+  
 
     // Validation
     if (paymentStatus === 'Partial') {
@@ -179,7 +180,7 @@ export function BillingTerminal({
         return
       }
     }
-
+  
     setLoading(true)
     try {
       const invoice = {
@@ -203,51 +204,99 @@ export function BillingTerminal({
       const newInvoice = await createInvoice(shop.id, invoice, items)
       
       // Record payment for Paid and Partial
-      if ((paymentStatus === 'Paid' || paymentStatus === 'Partial') && paidAmount > 0) {
-        try {
-          const { recordPaymentAction } = await import('@/app/(dashboard)/payments/actions')
-          const formData = new FormData()
-          formData.append('shop_id', shop.id)
-          formData.append('invoice_id', newInvoice.id)
-          formData.append('amount', paidAmount.toString())
-          formData.append('payment_method', paymentMethod)
-          formData.append('payment_date', new Date().toISOString().split('T')[0])
-          formData.append('reference_number', '')
-          formData.append('notes', paymentStatus === 'Paid' 
-            ? 'Full payment at invoice creation' 
-            : 'Initial partial payment at invoice creation')
-          
-          await recordPaymentAction(formData)
-          
-          if (paymentStatus === 'Paid') {
-            toast.success(`Invoice ${invoice.invoice_number} created & fully paid! 🎉`)
-          } else {
-            toast.success(`Invoice created! ₹${paidAmount} received, ₹${outstandingAmount} pending.`)
-          }
-        } catch (payError) {
-          console.error('Payment recording error:', payError)
-          toast.success('Invoice created! (Payment recording failed - record manually)')
-        }
-      } else {
-        toast.success(`Invoice ${invoice.invoice_number} created!`)
-      }
-      
-      setCart([])
-      setSelectedCustomer(null)
-      setNotes('')
-      setPaymentStatus('Unpaid')
-      setInitialPaymentAmount('')
-      setPaymentMethod('cash')
-      setShowCheckoutDialog(false)
-      router.push(`/invoices/${newInvoice.id}`)
-      router.refresh()
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to create invoice')
-      console.error('Checkout error:', e)
-    } finally {
-      setLoading(false)
+   if (
+  (paymentStatus === 'Paid' ||
+    paymentStatus === 'Partial') &&
+  paidAmount > 0
+) {
+  try {
+    const supabase = createClient()
+
+ const { count } = await supabase
+  .from('payments')
+  .select('*', {
+    count: 'exact',
+    head: true,
+  })
+  .eq('shop_id', shop.id)
+
+const paymentNumber = `PAY-${String(
+  (count || 0) + 1
+).padStart(5, '0')}`
+
+const { error } = await supabase
+  .from('payments')
+  .insert({
+    shop_id: shop.id,
+    invoice_id: newInvoice.id,
+    payment_number: paymentNumber,
+    amount: paidAmount,
+    payment_method: paymentMethod,
+    payment_date: new Date()
+      .toISOString()
+      .split('T')[0],
+    reference_number: null,
+    notes:
+      paymentStatus === 'Paid'
+        ? 'Full payment at invoice creation'
+        : 'Initial partial payment at invoice creation',
+  })
+
+if (error) throw error
+
+await supabase
+  .from('invoices')
+  .update({
+    status:
+      paymentStatus === 'Paid'
+        ? 'Paid'
+        : 'Partial',
+  })
+  .eq('id', newInvoice.id)
+
+    if (paymentStatus === 'Paid') {
+      toast.success(
+        `Invoice ${invoice.invoice_number} created & fully paid! 🎉`
+      )
+    } else {
+      toast.success(
+        `Invoice created! ₹${paidAmount} received, ₹${outstandingAmount} pending.`
+      )
     }
+  } catch (payError) {
+    console.error(
+      'Payment recording error:',
+      payError
+    )
+
+    toast.success(
+      'Invoice created! (Payment recording failed - record manually)'
+    )
   }
+} else {
+  toast.success(
+    `Invoice ${invoice.invoice_number} created!`
+  )
+}
+
+setCart([])
+setSelectedCustomer(null)
+setNotes('')
+setPaymentStatus('Unpaid')
+setInitialPaymentAmount('')
+setPaymentMethod('cash')
+setShowCheckoutDialog(false)
+
+router.push(`/invoices/${newInvoice.id}`)
+router.refresh() 
+}   catch (e: any) {
+  toast.error(e.message || 'Failed to create invoice')
+  console.error('Checkout error:', e)
+} finally {
+  setLoading(false)
+}
+}
+
 
   return (
     <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">
@@ -312,9 +361,19 @@ export function BillingTerminal({
                       Low
                     </Badge>
                   )}
-                  <div className="aspect-square rounded-lg bg-gradient-to-br from-[#4cd7f6]/10 to-[#8083ff]/10 flex items-center justify-center mb-2">
-                    <Package className="h-8 w-8 text-[#4cd7f6]/60 group-hover:scale-110 transition-transform" />
-                  </div>
+                  <div className="aspect-square rounded-lg overflow-hidden bg-[#0b1326] mb-2">
+  {product.image_url ? (
+    <img
+      src={product.image_url}
+      alt={product.name}
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <div className="w-full h-full bg-gradient-to-br from-[#4cd7f6]/10 to-[#8083ff]/10 flex items-center justify-center">
+      <Package className="h-8 w-8 text-[#4cd7f6]/60 group-hover:scale-110 transition-transform" />
+    </div>
+  )}
+</div>
                   <p className="font-medium text-sm text-[#dae2fd] line-clamp-2 leading-tight min-h-[2.5rem]">
                     {product.name}
                   </p>
@@ -742,5 +801,6 @@ export function BillingTerminal({
         </DialogContent>
       </Dialog>
     </div>
-  )
-}
+  )}
+
+

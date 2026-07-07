@@ -190,27 +190,27 @@ export async function getSuppliers(shopId: string) {
 // ============================================
 // PURCHASES
 // ============================================
-export async function getPurchases(shopId: string) {
+export async function getPurchases(
+  shopId: string
+) {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('purchase_orders')
-    .select(`
-      *,
-      suppliers (
-        id,
-        name
-      )
-    `)
-    .eq('shop_id', shopId)
-    .order('created_at', { ascending: false })
+
+  const { data, error } =
+    await supabase
+      .from('purchase_orders')
+      .select('*')
+      .eq('shop_id', shopId)
+      .order('created_at', {
+        ascending: false,
+      })
 
   if (error) {
     console.error(error)
     return []
   }
+
   return data || []
 }
-
 // ============================================
 // RECENT PURCHASES
 // ============================================
@@ -567,13 +567,25 @@ export async function getPurchaseReport(shopId: string, startDate: string, endDa
   
   const { data: purchases, error } = await supabase
     .from('purchase_orders')
-    .select(`
-      id, purchase_number, purchase_date, total, subtotal, gst, status,
-      supplier:suppliers(id, name, phone, gstin)
-    `)
-    .eq('shop_id', shopId)
-    .gte('purchase_date', startDate)
-    .lte('purchase_date', endDate)
+   .select(`
+  id,
+  purchase_number,
+  purchase_date,
+  total,
+  subtotal,
+  gst,
+  status,
+  supplier:suppliers(id, name, phone, gstin),
+  items:purchase_items(
+    id,
+    quantity,
+    unit_price,
+    product:products(
+      id,
+      name
+    )
+  )
+`)
     .order('purchase_date', { ascending: false })
 
   if (error) {
@@ -829,7 +841,7 @@ export async function getHSNSummaryReport(shopId: string, startDate: string, end
   // Group by HSN code
   const hsnGroups: Record<string, any> = {}
   ;(items || []).forEach(item => {
-    const hsn = item.hsn_code || item.product?.hsn_code || 'N/A'
+    const hsn = item.hsn_code || (item.product as any)?.hsn_code || 'N/A'
     if (!hsnGroups[hsn]) {
       hsnGroups[hsn] = {
         hsn_code: hsn,

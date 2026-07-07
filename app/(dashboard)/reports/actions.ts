@@ -3,7 +3,7 @@
 import { 
   getSalesReport, getPurchaseReport, getStockReport,
   getCustomerReport, getSupplierReport, getGSTSummaryReport, getHSNSummaryReport
-} from '@/lib/db-client'
+} from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export async function loadReportAction(

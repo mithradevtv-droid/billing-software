@@ -48,6 +48,7 @@ export default function SignupPage() {
     try {
       const supabase = createClient()
       
+      
       // 1. Sign up the user (auth metadata includes shop info)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,

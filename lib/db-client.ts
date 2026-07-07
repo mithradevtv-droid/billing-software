@@ -1,4 +1,4 @@
-import { createClient } from './supabase/server'
+import { createClient } from './supabase/client'
 
 // ============================================
 // CREATE CUSTOMER
@@ -415,7 +415,7 @@ export async function getHSNSummaryReport(shopId: string, startDate: string, end
 
   const hsnGroups: Record<string, any> = {}
   ;(items || []).forEach(item => {
-    const hsn = item.hsn_code || item.product?.hsn_code || 'N/A'
+    const hsn = item.hsn_code || (item.product as any)?.hsn_code || 'N/A'
     if (!hsnGroups[hsn]) {
       hsnGroups[hsn] = {
         hsn_code: hsn,
@@ -432,4 +432,57 @@ export async function getHSNSummaryReport(shopId: string, startDate: string, end
   })
 
   return Object.values(hsnGroups).sort((a: any, b: any) => b.total_value - a.total_value)
+}
+export async function updateInvoicePaymentStatus(invoiceId: string) {
+  const supabase = createClient()
+
+  const { data: invoice, error: invoiceError } = await supabase
+    .from('invoices')
+    .select('total')
+    .eq('id', invoiceId)
+    .single()
+
+  if (invoiceError) throw invoiceError
+  if (!invoice) return
+
+  const { data: payments, error: paymentsError } = await supabase
+    .from('payments')
+    .select('amount')
+    .eq('invoice_id', invoiceId)
+
+  if (paymentsError) throw paymentsError
+
+  const paidAmount = (payments || []).reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+  const total = Number(invoice.total || 0)
+  const status = paidAmount >= total ? 'Paid' : paidAmount > 0 ? 'Partial' : 'Unpaid'
+
+  const { error: updateError } = await supabase
+    .from('invoices')
+    .update({ status, paid_amount: paidAmount })
+    .eq('id', invoiceId)
+
+  if (updateError) throw updateError
+}
+
+export async function createPayment(data: any) {
+  const supabase = createClient()
+
+  const { count, error: countError } = await supabase
+    .from('payments')
+    .select('*', { count: 'exact', head: true })
+    .eq('shop_id', data.shop_id)
+
+  if (countError) throw countError
+
+  const paymentNumber = `PAY-${String((count || 0) + 1).padStart(5, '0')}`
+  const { data: payment, error } = await supabase
+    .from('payments')
+    .insert({ ...data, payment_number: paymentNumber })
+    .select()
+    .single()
+
+  if (error) throw error
+
+  await updateInvoicePaymentStatus(data.invoice_id)
+  return payment
 }
