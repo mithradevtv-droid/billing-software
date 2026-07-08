@@ -1,93 +1,103 @@
-# BillMate
+# BillMate Pro
 
-A modern GST Billing, Inventory Management, and Business Operations platform built for Indian businesses.
+A modern GST Billing, Inventory Management, Customer Management, Purchase Tracking, and Business Reporting System built with Next.js, Supabase, TypeScript, and Tailwind CSS.
 
-BillMate helps small and medium-sized businesses manage products, inventory, customers, suppliers, invoices, taxation, and stock movement through a clean and efficient web-based system.
-
----
-
-## Overview
-
-BillMate is a full-stack business management application designed to streamline day-to-day operations including:
-
-- GST-compliant invoicing
-- Inventory and stock management
-- Product catalog management
-- Customer and supplier management
-- Stock movement tracking
-- Business analytics and reporting
-
-The platform is built using modern web technologies with a focus on performance, scalability, and user experience.
+BillMate Pro is designed for small and medium-sized businesses that require a fast, professional, and easy-to-use billing platform with GST support, inventory tracking, customer management, supplier management, purchase management, payment tracking, and business analytics.
 
 ---
 
-## Key Features
+## Features
 
-### Authentication & Security
+### GST Billing & Invoicing
 
-- Secure authentication using Supabase Auth
-- Protected application routes
-- Password reset functionality
-- Row-Level Security (RLS)
-
-### Dashboard
-
-- Sales overview
-- Revenue tracking
-- Low stock monitoring
-- Inventory insights
-- Recent invoice activity
-
-### Product Management
-
-- Product catalog
-- SKU management
-- Barcode support
-- HSN code support
-- Product categorization
-- Product image uploads
-- Product search and filtering
+- GST-compliant invoice generation
+- Professional invoice templates
+- PDF invoice export
+- Invoice printing
+- Invoice sharing
+- Auto invoice numbering
+- Partial payment support
+- Paid, Partial, and Unpaid invoice tracking
+- Real-time tax calculations
+- Outstanding balance tracking
 
 ### Inventory Management
 
-- Real-time stock tracking
-- Stock adjustment system
-- Stock movement ledger
+- Product management
+- Product image upload
+- SKU management
+- Stock quantity tracking
 - Low stock alerts
-- Inventory monitoring dashboard
+- Purchase price tracking
+- Selling price management
+- GST rate configuration
+- Inventory reports
 
 ### Customer Management
 
 - Customer database
+- Customer contact management
 - GSTIN support
-- State-wise GST handling
-- Contact management
+- Customer purchase history
+- Customer invoice history
+- Outstanding payment tracking
 
 ### Supplier Management
 
 - Supplier database
-- GST information tracking
-- Contact and address management
+- Supplier contact details
+- Supplier purchase tracking
+- Purchase history management
 
-### GST Billing System
+### Purchase Management
 
-- GST-compliant invoices
-- CGST, SGST, and IGST calculations
-- Interstate and intrastate billing
-- Invoice status management
-- Payment tracking
+- Purchase order creation
+- Purchase editing
+- Purchase deletion
+- Stock auto-update on purchase
+- Supplier-wise purchases
+- Purchase reports
 
-### Invoice Management
+### Payment Management
 
-- Create invoices
-- View invoice details
-- Track payment status
-- Invoice history
-- Itemized billing
+- Invoice payment recording
+- Partial payment tracking
+- Full payment tracking
+- Payment history
+- Outstanding balance calculations
+- Multiple payment methods
+
+### Reports & Analytics
+
+- Sales Reports
+- Purchase Reports
+- Inventory Reports
+- Customer Reports
+- Supplier Reports
+- GST Summary Reports
+- HSN Summary Reports
+- Revenue Insights
+
+### Business Settings
+
+- Business profile management
+- GSTIN configuration
+- State selection
+- Logo upload
+- Invoice prefix customization
+- Tax configuration
+
+### Authentication & Security
+
+- Secure authentication with Supabase
+- Protected routes
+- Role-based access policies
+- Secure session handling
+- Account management
 
 ---
 
-## Technology Stack
+## Tech Stack
 
 ### Frontend
 
@@ -96,86 +106,72 @@ The platform is built using modern web technologies with a focus on performance,
 - TypeScript
 - Tailwind CSS v4
 - shadcn/ui
-- Radix UI
-- Lucide Icons
+- Lucide React
 
 ### Backend
 
 - Supabase
 - PostgreSQL
-- Supabase Storage
 - Supabase Authentication
+- Supabase Storage
 
-### Infrastructure
+### Development Tools
 
-- Row-Level Security (RLS)
-- Cloud Storage
-- Real-Time Database
+- ESLint
+- Turbopack
+- Git
+- GitHub
 
 ---
 
-## System Architecture
+## Screenshots
+
+## Screenshots
+
+| Dashboard | Billing |
+|-----------|----------|
+| ![](screenshots/dashboard.png) | ![](screenshots/billing.png) |
+
+| Inventory | Reports |
+|-----------|---------|
+| ![](screenshots/inventory.png) | ![](screenshots/reports.png) |
+
+---
+
+## Project Structure
 
 ```text
-BillMate
+app/
+├── (auth)/
+├── (dashboard)/
+│   ├── billing/
+│   ├── invoices/
+│   ├── customers/
+│   ├── products/
+│   ├── suppliers/
+│   ├── purchases/
+│   ├── payments/
+│   ├── reports/
+│   └── settings/
 │
-├── Authentication
-├── Dashboard
-├── Products
-├── Inventory
-├── Customers
-├── Suppliers
-├── Invoices
-├── Stock Ledger
-└── Reporting
+components/
+├── billing/
+├── customers/
+├── invoices/
+├── layout/
+├── payments/
+├── products/
+├── purchases/
+├── reports/
+├── settings/
+└── suppliers/
+│
+lib/
+├── supabase/
+├── db.ts
+├── db-client.ts
+└── utils.ts
 ```
-
----
-
-## Database Schema
-
-### Core Entities
-
-```text
-shops
-customers
-suppliers
-products
-invoices
-invoice_items
-stock_ledger
-```
-
-### Inventory Flow
-
-```text
-Product Creation
-       │
-       ▼
-Stock Added
-       │
-       ▼
-Invoice Generated
-       │
-       ▼
-Stock Deducted
-       │
-       ▼
-Ledger Updated
-```
-
----
-
-## Product Images
-
-BillMate supports product image management using Supabase Storage.
-
-Features include:
-
-- Product thumbnails
-- Cloud image storage
-- Public image delivery
-- Inventory visualization
 
 ---
 
@@ -199,8 +195,9 @@ npm install
 Create a `.env.local` file:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 ```
 
 ### Run Development Server
@@ -209,7 +206,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 npm run dev
 ```
 
-Application will be available at:
+Open:
 
 ```text
 http://localhost:3000
@@ -217,83 +214,179 @@ http://localhost:3000
 
 ---
 
-## Project Structure
+## Database
 
-```text
-app/
-components/
-lib/
-public/
+BillMate Pro uses Supabase PostgreSQL for:
 
-├── Authentication
-├── Dashboard
-├── Products
-├── Customers
-├── Suppliers
-├── Billing
-├── Inventory
-└── Reports
-```
-
----
-
-## Current Development Status
-
-### Completed
-
-- Authentication System
-- Dashboard
-- GST Billing Engine
-- Product Management
-- Inventory Tracking
-- Stock Adjustment Module
-- Product Image Uploads
-- Customer Management
-- Invoice Management
+- Shops
+- Customers
+- Suppliers
+- Products
+- Invoices
+- Invoice Items
+- Purchase Orders
+- Purchase Items
+- Payments
 - Stock Ledger
 
-### In Progress
+---
 
-- Supplier Management Module
-- Purchase Entry System
-- Purchase History Tracking
+## Core Modules
 
-### Planned
+### Dashboard
 
-- Customer Ledger
-- Supplier Ledger
-- Expense Management
-- Profit & Loss Reports
-- Barcode Scanner Integration
-- WhatsApp Invoice Sharing
-- Advanced Business Analytics
-- Multi-Shop Support
+Provides a complete overview of:
+
+- Revenue
+- Sales
+- Inventory
+- Customers
+- Purchases
+- Payments
+- Recent Activities
+
+### Billing Terminal
+
+Fast POS-style billing system with:
+
+- Product search
+- Product images
+- Cart management
+- GST calculation
+- Payment handling
+- Invoice generation
+
+### Inventory
+
+Manage:
+
+- Products
+- Stock levels
+- Pricing
+- GST rates
+- Product images
+
+### Payments
+
+Track:
+
+- Paid invoices
+- Partial payments
+- Outstanding invoices
+- Payment history
+
+### Reports
+
+Generate:
+
+- Sales Reports
+- Purchase Reports
+- Inventory Reports
+- GST Reports
+- HSN Reports
 
 ---
 
-## Version
+## Deployment
 
-```text
-Current Version: v0.4.0
-Development Stage: Active
+### Vercel
+
+```bash
+npm run build
 ```
 
+Deploy to:
+
+- Vercel
+- Netlify
+- Railway
+
+Recommended:
+
+- Frontend: Vercel
+- Backend: Supabase
+
 ---
 
-## Author
+## Future Improvements
 
-**Mithradev**
+- Barcode Scanner Integration
+- Thermal Printer Support
+- WhatsApp Invoice Sharing
+- Email Invoice Delivery
+- Multi-user Roles
+- Multi-store Support
+- Mobile Application
+- Advanced Analytics
+- GST Filing Assistance
 
-B.Tech CSE (Artificial Intelligence)  
-College of Engineering Trikaripur
+---
 
-GitHub:
-https://github.com/mithradevtv-droid
+## Known Limitations
+
+- Single business per account
+- No offline mode
+- No barcode support yet
+- No thermal printer integration yet
+- Mobile experience can be improved
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+1. Fork the repository
+2. Create a feature branch
+
+```bash
+git checkout -b feature-name
+```
+
+3. Commit changes
+
+```bash
+git commit -m "Add feature"
+```
+
+4. Push branch
+
+```bash
+git push origin feature-name
+```
+
+5. Open a Pull Request
 
 ---
 
 ## License
 
-This project is developed for educational, learning, and business management purposes.
+This project is licensed under the MIT License.
 
-All rights reserved.
+---
+
+## Author
+
+### Mithradev
+
+B.Tech Computer Science & Engineering (Artificial Intelligence)
+
+College of Engineering Trikaripur
+
+GitHub: https://github.com/mithradevtv-droid
+
+---
+
+## Support
+
+If you find this project useful:
+
+⭐ Star the repository
+
+🍴 Fork the repository
+
+🚀 Share your feedback
+
+---
+
+Built with Next.js, Supabase, TypeScript, React, and Tailwind CSS.
