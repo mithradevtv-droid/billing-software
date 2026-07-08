@@ -1,6 +1,6 @@
 import { Sidebar } from '@/components/layout/sidebar'
 import { MobileNav } from '@/components/layout/mobile-nav'
-import { Header } from '@/components/layout/header'
+import { Header } from '@/components/layout/Header'
 
 export default function DashboardLayout({
   children,
